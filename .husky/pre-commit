@@ -1,0 +1,39 @@
+node src/scripts/generate-checksum.js
+
+
+err=0
+
+for staged_file in $({ git diff --name-only ; git diff --name-only --staged ; } | sort | uniq)
+do
+  if [ ! -f $staged_file ]; then
+    break
+  fi
+
+  for file in $(echo $staged_file | grep '.*tsx\?$')
+  do
+   echo $staged_file
+    yarn eslint --fix $file
+    if [ $? -ne 0 ]
+    then
+      err=1
+    fi
+    git add $file
+  done
+
+  for file in $(echo $staged_file | grep '.*scss$')
+  do
+    echo $staged_file
+    yarn stylelint --syntax=scss --fix $file
+    if [ $? -ne 0 ]
+    then
+      err=1
+    fi
+    git add $file
+  done
+done
+
+if [ $err -eq 1 ]
+then
+    exit 1
+fi
+

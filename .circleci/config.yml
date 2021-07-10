@@ -1,0 +1,38 @@
+version: 2.1
+orbs:
+  node: circleci/node@4.1
+
+jobs:
+  build:
+    docker:
+      - image: cimg/node:16.2.0
+    steps:
+      - checkout
+      - restore_cache:
+          name: Restore Cache of Yarn dependencies
+          keys:
+            - yarn-packages--{{ checksum "yarn.lock" }}
+      - restore_cache:
+          name: Restore Cache of Land MFE
+          keys:
+            - mfe-build--{{ checksum "src/packages/land/checksum" }}
+      - run:
+          name: Install dependencies
+          command: yarn
+      - run:
+          name: Build production
+          command: yarn build
+      - save_cache:
+          name: Save Build for Land
+          key: mfe-build--{{ checksum "src/packages/land/checksum" }}
+          paths:
+            - src/packages/land/dist
+      - save_cache:
+          name: Save Build for APP MFE
+          key: mfe-build--{{ checksum "src/packages/app/checksum" }}
+          paths:
+            - src/packages/app/dist
+workflows:
+  build:
+    jobs:
+      - build
